@@ -7,6 +7,9 @@
 #define GAME_AREA_X 160
 #define GAME_AREA_WIDTH 480
 #define GAME_AREA_RIGHT 560
+#define MAX_BULLETS 50
+#define MAX_ENEMY_BULLETS 50
+#define MAX_BLOCKS 100
 
 typedef enum {
     MODE_RED = 0,
@@ -14,23 +17,60 @@ typedef enum {
     MODE_PURPLE
 } FireMode;
 
+typedef enum {
+    ENEMY_SHOT_SINGLE = 0,
+    ENEMY_SHOT_TRIPLE,
+    ENEMY_SHOT_CIRCLE,
+    ENEMY_SHOT_SPREAD
+} EnemyShotPattern;
+
 typedef struct {
     Vector2 position;
     float size;
     float speed;
-    FireMode mode;
-    Color color;
+    FireMode fireMode;
+    Color shipColor;
+    float hitboxRadius;
+    bool showHitbox;
 } Player;
+
+typedef struct {
+    Vector2 position;
+    Vector2 size;
+    float speed;
+    Color color;
+    FireMode mode;
+    bool active;
+} Bullet;
+
+typedef struct {
+    Vector2 position;
+    float size;
+    Color color;
+    FireMode requiredMode;
+    bool active;
+    int health;
+    EnemyShotPattern pattern;
+    bool canShootBack;
+} Block;
 
 typedef struct {
     Vector2 position;
     Vector2 velocity;
     Color color;
-    bool active;
-} Bullet;
+    float speed;
+    float radius;
+    bool active; 
+} EnemyBullet;
 
 void Gameplay_Init(void);
-void Gameplay_Update(void);
+bool Gameplay_Update(void);
 void Gameplay_Draw(void);
+
+void SpawnPatternLine(float, const char* pattern, float offsetX);
+void SpawnWallWithOffset(int numLines, const char* basePattern,
+                         float startY, float offestPerLine);
+bool CheckCollisionCricleRec(Vector2 circlePos, float circleRadius,
+                              Rectangle rec);
 
 #endif

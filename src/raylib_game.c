@@ -134,7 +134,10 @@ void UpdateDrawFrame(void)
             }
             break;
         case SCREEN_GAMEPLAY :
-            Gameplay_Update();
+            bool isGameplayActive = Gameplay_Update();
+            if(!isGameplayActive){
+                currentScreen = SCREEN_ENDING;
+            }
             break;
         case SCREEN_ENDING :
             break;
