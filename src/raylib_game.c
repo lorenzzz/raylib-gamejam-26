@@ -10,6 +10,10 @@
 ********************************************************************************************/
 
 #include "raylib.h"
+#include "screen_logo.h"
+#include "screen_title.h"
+#include "screen_gameplay.h"
+#include "screen_ending.h"
 
 #if defined(PLATFORM_WEB)
     #include <emscripten/emscripten.h>      // Emscripten library
@@ -53,6 +57,7 @@ static RenderTexture2D target = { 0 };  // Render texture to render our game
 static int frameCounter = 0;
 
 // TODO: Define global variables here, recommended to make them static
+static GameScreen currentScreen = SCREEN_LOGO; 
 
 //----------------------------------------------------------------------------------
 // Module Functions Declaration
@@ -112,9 +117,31 @@ void UpdateDrawFrame(void)
 {
     // Update
     //----------------------------------------------------------------------------------
-    // TODO: Update variables / Implement example logic at this point
-   
+    
+    // Raylib game jam screen
+    switch (currentScreen){
+        case SCREEN_LOGO :
+            Logo_Update();
+            if (Logo_IsFinished()) {
+                currentScreen = SCREEN_TITLE;
+            }
+            break;
+        case SCREEN_TITLE :
+            //Title_Update();
+            if(Title_ShouldStartGame()) {
+                Gameplay_Init();
+                currentScreen = SCREEN_GAMEPLAY;
+            }
+            break;
+        case SCREEN_GAMEPLAY :
+            Gameplay_Update();
+            break;
+        case SCREEN_ENDING :
+            break;
+    }
+
     frameCounter++;
+
     //----------------------------------------------------------------------------------
 
     // Draw
@@ -126,6 +153,22 @@ void UpdateDrawFrame(void)
         
         // TODO: Draw your game screen here
 
+        switch (currentScreen) {
+            case SCREEN_LOGO:
+                Logo_Draw();
+                break;
+            case SCREEN_TITLE:
+                Title_Draw();
+                break;
+            case SCREEN_GAMEPLAY:
+                Gameplay_Draw();
+                break;
+            case SCREEN_ENDING:
+                Ending_Draw();
+                break;
+        }
+
+        /**
         DrawRectangle(70, 90, 200, 200, BLACK);
         DrawRectangle(70 + 16, 90 + 16, 200 - 32, 200 - 32, RAYWHITE);
         DrawText("raylib", 70 + 200 - MeasureText("raylib", 40) - 32, 90 + 200 - 40 - 24, 40, BLACK);
@@ -136,7 +179,7 @@ void UpdateDrawFrame(void)
         if ((frameCounter/20)%2) DrawText("are you ready?", 160, 500, 50, BLACK);
         
         DrawRectangleLinesEx((Rectangle){ 0, 0, screenWidth, screenHeight }, 16, BLACK);
-        
+         */
     EndTextureMode();
     
     // Render to screen (main framebuffer)
