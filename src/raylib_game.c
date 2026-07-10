@@ -140,6 +140,10 @@ void UpdateDrawFrame(void)
             }
             break;
         case SCREEN_ENDING :
+            if(Ending_ShouldStartGame()){
+                Gameplay_Init();
+                currentScreen = SCREEN_GAMEPLAY;
+            }
             break;
     }
 
