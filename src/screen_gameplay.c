@@ -30,32 +30,32 @@ static const char PREDIFINED_PATTERNS[9][6][11] = {
         
     // Pattern 1 
     {
-        "EEEEEEEEEE",  
-        "EEEEEEEEEE",
         "RRRRRRRRRR",  
-        "RRRRRRRRRB", 
-        "RRRRRRRRBB", 
-        "RRRRRRRBBB"  
+        "BBBBBBBBBB",
+        "EEEEEEEEEE",  
+        "EEEEEEEEEE", 
+        "RRRRRRRRRR", 
+        "BBBBBBBBBB"  
     },
 
     // Pattern 2 
     {
         "EEEEEEEEEE",  
-        "EEEEEEEEEE",
-        "RRRRRRRRRR",  
-        "RRRRRRRRRB", 
-        "RRRRRRRRBB", 
-        "RRRRRRRBBB"  
+        "RRRRPPRRRR",
+        "RRRPPPPRRR",  
+        "EEEEEEEEEE", 
+        "RRRRPPRRRR", 
+        "EEEEEEEEEE"  
     },
        
     // Pattern 3 
     {
-        "EEEEEEEEEE",  
+        "RBRBRBRBRB",  
         "EEEEEEEEEE",
-        "RRRRRRRRRR",  
-        "RRRRRRRRRB", 
-        "RRRRRRRRBB", 
-        "RRRRRRRBBB"  
+        "BRBRBRBRBR",  
+        "EEEEEEEEEE",
+        "RBRBRBRBRB",  
+        "EEEEEEEEEE"
     },
 
     // Pattern 4 
@@ -63,49 +63,49 @@ static const char PREDIFINED_PATTERNS[9][6][11] = {
         "EEEEEEEEEE",  
         "EEEEEEEEEE",
         "RRRRRRRRRR",  
-        "RRRRRRRRRB", 
-        "RRRRRRRRBB", 
-        "RRRRRRRBBB"  
+        "EEEEEEEEEE", 
+        "BBBBBBBBBB", 
+        "EEEEEEEEEE"  
     },
 
     // Pattern 5 
     {
         "EEEEEEEEEE",  
-        "EEEEEEEEEE",
-        "RRRRRRRRRR",  
-        "RRRRRRRRRB", 
-        "RRRRRRRRBB", 
-        "RRRRRRRBBB"  
+        "RRPPPPPPRR",
+        "RRRPPPPRRR",  
+        "RRRRPPRRRR", 
+        "RRRRRPRRRR", 
+        "EEEEEEEEEE"  
     },
 
     // Pattern 6 
     {
-        "EEEEEEEEEE",  
-        "EEEEEEEEEE",
         "RRRRRRRRRR",  
-        "RRRRRRRRRB", 
-        "RRRRRRRRBB", 
-        "RRRRRRRBBB"  
+        "EEEEEEEEEE",
+        "BBBBBBBBBB",  
+        "EEEEEEEEEE", 
+        "PPPPPPPPPP", 
+        "EEEEEEEEEE"  
     },
 
     // Pattern 7 
     {
-        "EEEEEEEEEE",  
-        "EEEEEEEEEE",
-        "RRRRRRRRRR",  
-        "RRRRRRRRRB", 
-        "RRRRRRRRBB", 
-        "RRRRRRRBBB"  
+        "RRRRRBBBBB",  
+        "RRRRRBBBBB",
+        "RRRRRBBBBB",  
+        "EEEEEEEEEE", 
+        "BBBBBRRRRR", 
+        "BBBBBRRRRR"  
     },
 
     // Pattern 8 
     {
         "EEEEEEEEEE",  
         "EEEEEEEEEE",
-        "RRRRRRRRRR",  
-        "RRRRRRRRRB", 
-        "RRRRRRRRBB", 
-        "RRRRRRRBBB"  
+        "EEEEEEEEEE",  
+        "EEEEEEEEEE", 
+        "PPPPPPPPPP", 
+        "EEEEEEEEEE"  
     }
 };
 
@@ -143,7 +143,7 @@ void SpawnPatternLine(float y, const char* pattern, float offsetX) {
                 blocks[j].position.y = y;
                 blocks[j].size = BLOCK_SIZE;
                 blocks[j].active = true;
-                blocks[j].health = 3;
+                blocks[j].health = 1;
                 blocks[j].hasBeenHit = false;
                 blocks[j].canShootBack = false;
                 blocks[j].flashTimer = 0;
@@ -353,7 +353,7 @@ void Gameplay_Init(void) {
         blocks[i].active = false;
         blocks[i].hasBeenHit = false;
         blocks[i].canShootBack = false;
-        blocks[i].health = 3;
+        blocks[i].health = 2;
         blocks[i].shootTimer = 0;
     }
 
@@ -397,10 +397,10 @@ bool Gameplay_Update(void) {
     if(player.position.y > GetScreenHeight() - player.size)
        player.position.y = GetScreenHeight() - player.size;
 
-    bool xPressed = IsKeyDown(KEY_X);
-    bool cPressed = IsKeyDown(KEY_C);
+    bool rPressed = IsKeyDown(KEY_LEFT_CONTROL);
+    bool bPressed = IsKeyDown(KEY_LEFT_ALT);
 
-    if (xPressed && cPressed) {
+    if (rPressed && bPressed) {
         player.fireMode = MODE_PURPLE;
         player.shipColor = PURPLE;
         purpleLock = 10;
@@ -408,11 +408,11 @@ bool Gameplay_Update(void) {
     else if (purpleLock > 0) {
         purpleLock--;
     }
-    else if (xPressed) {
+    else if (rPressed) {
         player.fireMode = MODE_RED;
         player.shipColor = RED;
     }
-    else if (cPressed) {
+    else if (bPressed) {
         player.fireMode = MODE_BLUE;
         player.shipColor = BLUE;
     }
@@ -483,7 +483,7 @@ bool Gameplay_Update(void) {
                                 AddScore(-50);
                                 blocks[b].hasBeenHit = true;
                                 blocks[b].canShootBack = true;
-                                blocks[b].health = 10;
+                                blocks[b].health = 4;
                                 blocks[b].pattern = GetRandomValue(0, 3);
                                 blocks[b].bulletMode = blocks[b].requiredMode;
                                 blocks[b].shootCooldown = 60;
@@ -776,7 +776,7 @@ void Gameplay_Draw(void) {
     if (startBuffer > 30) {
         DrawText("GO!", 
                   GetScreenWidth()/2 - MeasureText("GO", 60)/2,
-                  GetScreenHeight()/2, 60, DARKGRAY);
+                  GetScreenHeight()/2, 60, BLACK);
     }
 
     /* Debug

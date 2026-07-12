@@ -2,7 +2,7 @@
 #include "raylib.h"
 
 static int LogoFrameCounter = 0;
-static const int LOGO_DURATION = 120;
+static const int LOGO_DURATION = 60;
 
 void Logo_Init(void) {
     LogoFrameCounter = 0;

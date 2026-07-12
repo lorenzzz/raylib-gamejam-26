@@ -7,21 +7,21 @@ void Ending_Init(void){}
 void Ending_Update(void) {}
 void Ending_Draw(void) {
     DrawText("GAME OVER",
-             GetScreenWidth() / 2 - MeasureText("GAME OVER", 40)/2,
-             100, 40, DARKGRAY);
+             GetScreenWidth() / 2 - MeasureText("GAME OVER", 80)/2,
+             100, 80, BLACK);
 
     // Score
     char finalScore[32];
     sprintf(finalScore, "SCORE : %d", GetScore());
     DrawText(finalScore,
-             GetScreenWidth()/2 - MeasureText(finalScore, 30)/2,
-             300, 30, BLACK);
+             120,
+             300, 60, PURPLE);
 
     // Restart
     if ((GetTime() * 2) - (int)(GetTime() * 2) < 0.5f) {
         DrawText("PRESS SPACE TO RESTART",
-                GetScreenWidth()/2 - MeasureText("PRESS SPACE TO RESTART", 30)/2,
-                400, 30, DARKGRAY);
+                120,
+                370, 30, BLUE);
     }
 }
 
