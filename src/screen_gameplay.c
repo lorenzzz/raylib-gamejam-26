@@ -13,6 +13,101 @@ static Block blocks[MAX_BLOCKS];
 static EnemyBullet enemyBullets[MAX_ENEMY_BULLETS];
 static float wallSpeed = 2.0f;
 static Particle particles[MAX_PARTICLES];
+static Container containers[MAX_CONTAINERS];
+static float containerScrollSpeed = 2.0f;
+static int score = 0;
+
+static const char PREDIFINED_PATTERNS[9][6][11] = {
+    // Pattern 0 
+    {
+        "EEEEEEEEEE",  
+        "EEEEEEEEEE",
+        "RRRRRRRRRR",  
+        "RRRRRRRRRB", 
+        "RRRRRRRRBB", 
+        "RRRRRRRBBB"  
+    },
+        
+    // Pattern 1 
+    {
+        "EEEEEEEEEE",  
+        "EEEEEEEEEE",
+        "RRRRRRRRRR",  
+        "RRRRRRRRRB", 
+        "RRRRRRRRBB", 
+        "RRRRRRRBBB"  
+    },
+
+    // Pattern 2 
+    {
+        "EEEEEEEEEE",  
+        "EEEEEEEEEE",
+        "RRRRRRRRRR",  
+        "RRRRRRRRRB", 
+        "RRRRRRRRBB", 
+        "RRRRRRRBBB"  
+    },
+       
+    // Pattern 3 
+    {
+        "EEEEEEEEEE",  
+        "EEEEEEEEEE",
+        "RRRRRRRRRR",  
+        "RRRRRRRRRB", 
+        "RRRRRRRRBB", 
+        "RRRRRRRBBB"  
+    },
+
+    // Pattern 4 
+    {
+        "EEEEEEEEEE",  
+        "EEEEEEEEEE",
+        "RRRRRRRRRR",  
+        "RRRRRRRRRB", 
+        "RRRRRRRRBB", 
+        "RRRRRRRBBB"  
+    },
+
+    // Pattern 5 
+    {
+        "EEEEEEEEEE",  
+        "EEEEEEEEEE",
+        "RRRRRRRRRR",  
+        "RRRRRRRRRB", 
+        "RRRRRRRRBB", 
+        "RRRRRRRBBB"  
+    },
+
+    // Pattern 6 
+    {
+        "EEEEEEEEEE",  
+        "EEEEEEEEEE",
+        "RRRRRRRRRR",  
+        "RRRRRRRRRB", 
+        "RRRRRRRRBB", 
+        "RRRRRRRBBB"  
+    },
+
+    // Pattern 7 
+    {
+        "EEEEEEEEEE",  
+        "EEEEEEEEEE",
+        "RRRRRRRRRR",  
+        "RRRRRRRRRB", 
+        "RRRRRRRRBB", 
+        "RRRRRRRBBB"  
+    },
+
+    // Pattern 8 
+    {
+        "EEEEEEEEEE",  
+        "EEEEEEEEEE",
+        "RRRRRRRRRR",  
+        "RRRRRRRRRB", 
+        "RRRRRRRRBB", 
+        "RRRRRRRBBB"  
+    }
+};
 
 void ShootBullet(void) {
     for (int i = 0; i < MAX_BULLETS; i++) {
@@ -32,23 +127,29 @@ void ShootBullet(void) {
 }
 
 void SpawnPatternLine(float y, const char* pattern, float offsetX) {
-    float blockSize = 40;
-    float spacing = 10;
-    float startX = GAME_AREA_X + 20 + offsetX;
+    //float blockSize = 40;
+    //float spacing = 10;
+    float startX = GAME_AREA_X;
 
-    int patternLength = strlen(pattern);
-    for (int i = 0; i < patternLength; i++) {
+    //int patternLength = strlen(pattern);
+    for (int i = 0; i < BLOCKS_PER_LINE; i++) {
+        char blockType = pattern[i];
+        if (blockType == 'E') continue;
+
         for (int j = 0; j < MAX_BLOCKS; j++){
             if (!blocks[j].active) {
                 // Position
-                blocks[j].position.x = startX + i * (blockSize + spacing);
+                blocks[j].position.x = startX + i * BLOCK_SIZE;
                 blocks[j].position.y = y;
-                blocks[j].size = blockSize;
+                blocks[j].size = BLOCK_SIZE;
                 blocks[j].active = true;
                 blocks[j].health = 3;
+                blocks[j].hasBeenHit = false;
+                blocks[j].canShootBack = false;
+                blocks[j].flashTimer = 0;
 
                 // Color
-                switch(pattern[i]) {
+                switch(blockType) {
                     case 'R':
                         blocks[j].color = RED;
                         blocks[j].requiredMode = MODE_RED;
@@ -61,6 +162,7 @@ void SpawnPatternLine(float y, const char* pattern, float offsetX) {
                         blocks[j].color = PURPLE;
                         blocks[j].requiredMode = MODE_PURPLE;
                 }
+                //printf("Spawn block type %c at X=%f Y=%f\n", blockType, blocks[j].position.x, blocks[j].position.y);
                 break; // next pattern char
             }
         }
@@ -139,6 +241,94 @@ bool CheckCollisionCircleRec(Vector2 circlePos, float circleRadius,
     return (dx*dx + dy*dy) < (circleRadius * circleRadius);
 }
 */
+
+void SpawnContainerBlocks(int containerIndex){
+    Container* c = &containers[containerIndex];
+
+    int currentLine = 0;
+
+    for (int line = 0; line < 6; line ++) {
+        // Check il the line has blocks
+        bool lineHasBlocks = false;
+        for (int b = 0; b < 10; b++) {
+            if (c->pattern[line][b] != 'E') {
+                lineHasBlocks = true;
+                break;
+            }
+        }
+
+        if (!lineHasBlocks) continue; // skip empty lines
+
+        // Calculate y line position in the container
+        float lineY = c -> y + (5 - currentLine) * BLOCK_SIZE;
+
+        SpawnPatternLine(lineY, c->pattern[line], 0);
+
+        currentLine++;
+    }
+
+    c->spawned = true;
+}
+
+int CountNonEmptyLines(int containerIndex){
+    int count = 0;
+    for (int line = 0; line < 6; line ++) {
+        bool hasBlock = false;
+        for (int block=0; block < 10; block++) {
+            if(containers[containerIndex].pattern[line][block] != 'E') {
+                hasBlock = true;
+                break;
+            }
+        }
+        if (hasBlock) count ++;
+    }
+    return count;
+}
+
+void AssignRandomPattern(int containerIndex){
+    int patternID = GetRandomValue(0, 8);
+
+    // copy pattern into the container
+    for (int line = 0; line < 6; line ++) {
+        strcpy(containers[containerIndex].pattern[line],
+               PREDIFINED_PATTERNS[patternID][line]);
+    }
+}
+
+void InitContainers(void) {
+    // Create 6 containers on top of the screen
+    float currentY = -CONTAINER_HEIGHT;
+
+    for (int i = 0; i < MAX_CONTAINERS; i ++) {
+        containers[i].y = currentY;
+        containers[i].active = true;
+        containers[i].spawned = false;
+
+        // Generate random pattern
+        AssignRandomPattern(i);
+
+        // Calculate non empty lines
+        containers[i].numLines = CountNonEmptyLines(i);
+
+        // Y position of next container
+        currentY -= CONTAINER_HEIGHT;
+    }
+}
+
+// Score
+void AddScore(int points) {
+    score += points;
+    if (score < 0 ) score = 0;
+}
+
+void ResetScore(void) {
+    score = 0;
+}
+
+int GetScore(void) {
+    return score;
+}
+
 void Gameplay_Init(void) {
 
     startBuffer = 60;
@@ -150,7 +340,7 @@ void Gameplay_Init(void) {
     player.fireMode = MODE_RED;
     player.shipColor = RED;
     player.hitboxRadius = 10.0f;
-    player.showHitbox = true;
+    player.showHitbox = false;
 
     // Deactivate player bullet
     for (int i = 0; i < MAX_BULLETS; i++) {
@@ -178,8 +368,13 @@ void Gameplay_Init(void) {
         particles[i].active = false;
     }
 
+    InitContainers();
+    ResetScore();
+
+    /*
     SpawnPatternLine(-50, "RRRRR", 0);
     SpawnPatternLine(-150, "BBBBB", 0);
+    */
 }
 
 bool Gameplay_Update(void) {
@@ -242,6 +437,8 @@ bool Gameplay_Update(void) {
                 bullets[i].size.y
             };
 
+            bool bulletHit = false;
+
             // Block collision
             for (int b = 0; b < MAX_BLOCKS; b++){
                 if (blocks[b].active) {
@@ -258,6 +455,12 @@ bool Gameplay_Update(void) {
                                     blocks[b].health--;
                                     blocks[b].flashTimer = 5;
                                     if (blocks[b].health <= 0) {
+                                        AddScore(1000);
+                                        SpawnExplosion(
+                                            blocks[b].position.x + blocks[b].size/2,
+                                            blocks[b].position.y + blocks[b].size/2,
+                                            blocks[b].color
+                                        );
                                         blocks[b].active = false;
                                     }
                                 }
@@ -265,16 +468,19 @@ bool Gameplay_Update(void) {
                         else {
                             if (bullets[i].mode == blocks[b].requiredMode) {
                                 blocks[b].health --;
+                                blocks[b].flashTimer = 5;
                                 if (blocks[b].health <= 0) {
                                     SpawnExplosion(
                                         blocks[b].position.x + blocks[b].size/2,
                                         blocks[b].position.y + blocks[b].size/2,
                                         blocks[b].color
                                     );
+                                    AddScore(100);
                                     blocks[b].active = false;
                                 }
                             }
                             else {
+                                AddScore(-50);
                                 blocks[b].hasBeenHit = true;
                                 blocks[b].canShootBack = true;
                                 blocks[b].health = 10;
@@ -298,6 +504,8 @@ bool Gameplay_Update(void) {
                         }
 
                         bullets[i].active = false;
+                        bulletHit = true;
+                        break;
                     }
                 }
             }
@@ -335,6 +543,9 @@ bool Gameplay_Update(void) {
 
             if (enemyBullets[i].position.x > 720 ||
                 enemyBullets[i].position.y > 720 ||
+                enemyBullets[i].position.y < -50 ||
+                enemyBullets[i].position.x < GAME_AREA_X ||
+                enemyBullets[i].position.x > GAME_AREA_RIGHT ||
                 enemyBullets[i].position.x < 0) {
                 enemyBullets[i].active = false;
             }
@@ -402,16 +613,139 @@ bool Gameplay_Update(void) {
 
     SpawnTrail(player.position.x, player.position.y, player.shipColor);
 
+    // Containers
+
+    // Move containers
+    for (int i = 0; i< MAX_CONTAINERS; i++) {
+        if(containers[i].active) {
+            containers[i].y += containerScrollSpeed;
+        }
+    }
+
+    // Spawn blocks
+    for (int i = 0; i < MAX_CONTAINERS; i ++){
+        if(containers[i].active && !containers[i].spawned){
+            if (containers[i].y + CONTAINER_HEIGHT > -50) {
+                SpawnContainerBlocks(i);
+            }
+        }
+    }
+
+    // Recycle containers out of screen
+    for (int i = 0; i < MAX_CONTAINERS; i++) {
+        if (containers[i].active && containers[i].y > 720) {
+            // Find highest container
+            float highestY = containers[0].y;
+            int highestIndex = 0;
+            for (int j=0; j < MAX_CONTAINERS; j++) {
+                if(containers[j].y < highestY) {
+                    highestY = containers[j].y;
+                    highestIndex = j;
+                }
+            }
+
+            containers[i].y = highestY - CONTAINER_HEIGHT;
+            containers[i].spawned = false;
+            // TODO GENERATE RANDOM PATTERN
+            containers[i].numLines = CountNonEmptyLines(i);
+        }
+    }
+
     return true;
 }
 
 void Gameplay_Draw(void) {
 
-    // Go startup
-    if (startBuffer > 30) {
-        DrawText("GO!", 
-                  GetScreenWidth()/2 - MeasureText("GO", 60)/2,
-                  GetScreenHeight()/2, 60, DARKGRAY);
+    // Particules
+    for (int i = 0; i< MAX_PARTICLES; i ++) {
+        if (particles[i].active) {
+            DrawCircle(
+                particles[i].position.x,
+                particles[i].position.y,
+                particles[i].size,
+                particles[i].color
+            );
+        }
+    }
+    
+    // Wall blocks
+    for (int i = 0; i < MAX_BLOCKS; i++) {
+        if (blocks[i].active) {
+            /*
+            Color drawColor = (blocks[i].flashTimer > 0) ? BLACK : blocks[i].color;
+            DrawRectangle(
+                blocks[i].position.x,
+                blocks[i].position.y,
+                blocks[i].size,
+                blocks[i].size,
+                drawColor
+            );*/
+
+            if (blocks[i].flashTimer > 0) {
+                // Black flash
+                DrawRectangle(blocks[i].position.x, blocks[i].position.y,
+                              blocks[i].size, blocks[i].size, BLACK);
+            } else {
+                // Gradient
+                Color c = blocks[i].color;
+
+                // Exterior
+                DrawRectangle(blocks[i].position.x, blocks[i].position.y,
+                              blocks[i].size, blocks[i].size,
+                              (Color){c.r/2, c.g/2, c.b/2, 255});
+
+                // Middle
+                DrawRectangle(blocks[i].position.x + 5, blocks[i].position.y + 5,
+                              blocks[i].size - 10, blocks[i].size - 10,c);
+
+                // Center
+                DrawRectangle(blocks[i].position.x + 10, blocks[i].position.y + 10,
+                              blocks[i].size - 20, blocks[i].size - 20,
+                              (Color){fminf(c.r + 50, 255), fminf(c.g+ 50, 255), 
+                                     fminf(c.b + 50, 255), 255});
+            }
+
+            if (blocks[i].canShootBack) {
+                /*
+                DrawRectangleLinesEx((Rectangle){
+                    blocks[i].position.x -2, blocks[i].position.y -2,
+                    blocks[i].size + 4, blocks[i].size + 4
+                }, 2, BLACK);
+                */ 
+                float centerSize = 15.0f;
+                float offset = (blocks[i].size - centerSize) /2;
+                DrawRectangle(blocks[i].position.x + offset, 
+                              blocks[i].position.y + offset,
+                              centerSize, centerSize, BLACK);
+            }
+        }
+    }
+
+    // Enemy Block bullets
+    for (int i = 0; i < MAX_ENEMY_BULLETS; i ++) {
+        if(enemyBullets[i].active) {
+            Color c = enemyBullets[i].color;
+
+            DrawCircle(enemyBullets[i].position.x, enemyBullets[i].position.y,
+                       enemyBullets[i].radius + 6, (Color){c.r, c.g, c.b, 50});
+            DrawCircle(enemyBullets[i].position.x, enemyBullets[i].position.y,
+                       enemyBullets[i].radius + 3, (Color){c.r, c.g, c.b, 128});
+            DrawCircle(enemyBullets[i].position.x, enemyBullets[i].position.y,
+                       enemyBullets[i].radius, c);
+        }
+    }
+
+    // Player Bullets
+    for (int i =0; i < MAX_BULLETS; i++) {
+        if (bullets[i].active) {
+            DrawRectangle (
+                bullets[i].position.x - bullets[i].size.x/2,
+                bullets[i].position.y,
+                bullets[i].size.x,
+                bullets[i].size.y,
+                bullets[i].color
+            );
+        }
     }
 
     // Player Ship
@@ -432,63 +766,27 @@ void Gameplay_Draw(void) {
     // Game zone limit
     DrawLine(GAME_AREA_X, 0, GAME_AREA_X, GetScreenHeight(), GRAY);
     DrawLine(GAME_AREA_RIGHT, 0, GAME_AREA_RIGHT, GetScreenHeight(), GRAY);
-
-    // Player Bullets
-    for (int i =0; i < MAX_BULLETS; i++) {
-        if (bullets[i].active) {
-            DrawRectangle (
-                bullets[i].position.x - bullets[i].size.x/2,
-                bullets[i].position.y,
-                bullets[i].size.x,
-                bullets[i].size.y,
-                bullets[i].color
-            );
-        }
+    
+    // Score
+    char scoreText[32];
+    sprintf(scoreText, "SCORE: %d", GetScore());
+    DrawText(scoreText, 20, 20, 30, BLACK);
+    
+    // Go startup
+    if (startBuffer > 30) {
+        DrawText("GO!", 
+                  GetScreenWidth()/2 - MeasureText("GO", 60)/2,
+                  GetScreenHeight()/2, 60, DARKGRAY);
     }
 
-    // Enemy Block bullets
-    for (int i = 0; i < MAX_ENEMY_BULLETS; i ++) {
-        if(enemyBullets[i].active) {
-            Color c = enemyBullets[i].color;
-
-            DrawCircle(enemyBullets[i].position.x, enemyBullets[i].position.y,
-                       enemyBullets[i].radius + 6, (Color){c.r, c.g, c.b, 50});
-            DrawCircle(enemyBullets[i].position.x, enemyBullets[i].position.y,
-                       enemyBullets[i].radius + 3, (Color){c.r, c.g, c.b, 128});
-            DrawCircle(enemyBullets[i].position.x, enemyBullets[i].position.y,
-                       enemyBullets[i].radius, c);
-        }
+    /* Debug
+    int activeBlocks = 0;
+    for (int i = 0; i< MAX_BLOCKS; i++) {
+        if (blocks[i].active) activeBlocks++;
     }
+    printf("Active Blocks: %d\n", activeBlocks);
+    */
 
-    // Wall blocks
-    for (int i = 0; i < MAX_BLOCKS; i++) {
-        if (blocks[i].active) {
-            Color drawColor = (blocks[i].flashTimer > 0) ? BLACK : blocks[i].color;
-            DrawRectangle(
-                blocks[i].position.x,
-                blocks[i].position.y,
-                blocks[i].size,
-                blocks[i].size,
-                drawColor
-            );
-            if (blocks[i].canShootBack) {
-                DrawRectangleLines(blocks[i].position.x, blocks[i].position.y,
-                                   blocks[i].size, blocks[i].size, BLACK);
-                DrawRectangleLines(blocks[i].position.x - 1, blocks[i].position.y - 1,
-                                   blocks[i].size+2, blocks[i].size+2, BLACK);
-            }
-        }
-    }
 
-    // Particules
-    for (int i = 0; i< MAX_PARTICLES; i ++) {
-        if (particles[i].active) {
-            DrawCircle(
-                particles[i].position.x,
-                particles[i].position.y,
-                particles[i].size,
-                particles[i].color
-            );
-        }
-    }
+
 }

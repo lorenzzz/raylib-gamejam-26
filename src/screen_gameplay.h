@@ -11,6 +11,10 @@
 #define MAX_ENEMY_BULLETS 100
 #define MAX_BLOCKS 100
 #define MAX_PARTICLES 200
+#define MAX_CONTAINERS 6
+#define CONTAINER_HEIGHT 240.0f
+#define BLOCKS_PER_LINE 10
+#define BLOCK_SIZE 40.0f
 
 typedef enum {
     MODE_RED = 0,
@@ -79,10 +83,19 @@ typedef struct {
     bool active;
 } Particle;
 
+typedef struct {
+    float y;
+    char pattern[6][11];
+    int numLines;
+    bool active;
+    bool spawned;
+} Container;
+
 void Gameplay_Init(void);
 bool Gameplay_Update(void);
 void Gameplay_Draw(void);
 
+void SpawnContainerBlocks(int containerIndex);
 void SpawnPatternLine(float, const char* pattern, float offsetX);
 void SpawnWallWithOffset(int numLines, const char* basePattern,
                          float startY, float offestPerLine); //TODO
@@ -92,5 +105,12 @@ void SpawnExplosion(float x, float y, Color color);
 void SpawnTrail(float x, float y, Color color);
 bool CheckCollisionCricleRec(Vector2 circlePos, float circleRadius,
                               Rectangle rec);
+int CountNonEmptyLines(int containerIndex);
+void InitContainers(void);
+void AssignRandomPattern(int containerIndex);
+void AddScore(int points);
+void ResetScore(void);
+int GetScore(void);
+
 
 #endif
