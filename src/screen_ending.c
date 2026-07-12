@@ -4,7 +4,9 @@
 #include <stdio.h>
 
 void Ending_Init(void){}
+
 void Ending_Update(void) {}
+
 void Ending_Draw(void) {
     DrawText("GAME OVER",
              GetScreenWidth() / 2 - MeasureText("GAME OVER", 80)/2,

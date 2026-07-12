@@ -17,6 +17,16 @@
 
 #if defined(PLATFORM_WEB)
     #include <emscripten/emscripten.h>      // Emscripten library
+    #include <emscripten/html5.h>
+
+    EM_JS(void, disable_game_keys, (), {
+        document.addEventListener('keydown', function(e){
+            if(["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", 
+                "KeySpace", "KeyS", "KeyF"].indexOf(e.code) > -1) {
+                e.preventDefault();
+            }
+        }, false);
+    });
 #endif
 
 #include <stdio.h>                          // Required for: printf()
@@ -58,6 +68,10 @@ static int frameCounter = 0;
 
 // TODO: Define global variables here, recommended to make them static
 static GameScreen currentScreen = SCREEN_LOGO; 
+static bool gameOverSoundPlayed = false;
+Sound soundPlayerShoot;
+Sound soundEnemyShoot;
+Sound soundGameOver;
 
 //----------------------------------------------------------------------------------
 // Module Functions Declaration
@@ -78,6 +92,15 @@ int main(void)
     InitWindow(screenWidth, screenHeight, "raylib gamejam template");
     
     // TODO: Load resources / Initialize variables at this point
+    InitAudioDevice();
+
+    soundPlayerShoot = LoadSound("resources/player-shoot.wav");
+    soundEnemyShoot = LoadSound("resources/enemy-shoot.wav");
+    soundGameOver = LoadSound("resources/gameover.wav");
+
+    SetSoundVolume(soundPlayerShoot, 0.3f);
+    SetSoundVolume(soundEnemyShoot, 0.3f);
+    SetSoundVolume(soundGameOver, 0.3f);
     
     // Render texture to draw, enables screen scaling
     // NOTE: If screen is scaled, mouse input should be scaled proportionally
@@ -85,6 +108,7 @@ int main(void)
     SetTextureFilter(target.texture, TEXTURE_FILTER_BILINEAR);
 
 #if defined(PLATFORM_WEB)
+    disable_game_keys();
     emscripten_set_main_loop(UpdateDrawFrame, 60, 1);
 #else
     SetTargetFPS(60);     // Set our game frames-per-second
@@ -102,6 +126,10 @@ int main(void)
     UnloadRenderTexture(target);
     
     // TODO: Unload all loaded resources at this point
+    UnloadSound(soundPlayerShoot);
+    UnloadSound(soundEnemyShoot);
+    UnloadSound(soundGameOver);
+    CloseAudioDevice();
 
     CloseWindow();        // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
@@ -130,6 +158,7 @@ void UpdateDrawFrame(void)
             //Title_Update();
             if(Title_ShouldStartGame()) {
                 Gameplay_Init();
+                PlaySound(soundPlayerShoot);
                 currentScreen = SCREEN_GAMEPLAY;
             }
             break;
@@ -140,9 +169,15 @@ void UpdateDrawFrame(void)
             }
             break;
         case SCREEN_ENDING :
+            if(!gameOverSoundPlayed) {
+                PlaySound(soundGameOver);
+                gameOverSoundPlayed = true;
+            }
             if(Ending_ShouldStartGame()){
                 Gameplay_Init();
+                PlaySound(soundEnemyShoot);
                 currentScreen = SCREEN_GAMEPLAY;
+                gameOverSoundPlayed = false;
             }
             break;
     }

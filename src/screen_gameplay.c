@@ -397,10 +397,10 @@ bool Gameplay_Update(void) {
     if(player.position.y > GetScreenHeight() - player.size)
        player.position.y = GetScreenHeight() - player.size;
 
-    bool rPressed = IsKeyDown(KEY_LEFT_CONTROL);
-    bool bPressed = IsKeyDown(KEY_LEFT_ALT);
+    bool sPressed = IsKeyDown(KEY_S);
+    bool fPressed = IsKeyDown(KEY_F);
 
-    if (rPressed && bPressed) {
+    if (sPressed && fPressed) {
         player.fireMode = MODE_PURPLE;
         player.shipColor = PURPLE;
         purpleLock = 10;
@@ -408,11 +408,11 @@ bool Gameplay_Update(void) {
     else if (purpleLock > 0) {
         purpleLock--;
     }
-    else if (rPressed) {
+    else if (sPressed) {
         player.fireMode = MODE_RED;
         player.shipColor = RED;
     }
-    else if (bPressed) {
+    else if (fPressed) {
         player.fireMode = MODE_BLUE;
         player.shipColor = BLUE;
     }
@@ -455,7 +455,7 @@ bool Gameplay_Update(void) {
                                     blocks[b].health--;
                                     blocks[b].flashTimer = 5;
                                     if (blocks[b].health <= 0) {
-                                        AddScore(1000);
+                                        AddScore(200);
                                         SpawnExplosion(
                                             blocks[b].position.x + blocks[b].size/2,
                                             blocks[b].position.y + blocks[b].size/2,
